@@ -118,6 +118,8 @@ class BootstrapFormHelper extends FormHelper {
 			$type = $this->_extractOption('type', $this->_Opts[$fieldName]);
 
 			$default = array('wrap' => 'span', 'class' => 'input-group-addon');
+			$defaultButton = array('class' => 'input-group-btn') + $default;
+			
 			$divOptions = array();
 			foreach ($addons as $addon) {
 				$$addon = null;
@@ -129,10 +131,11 @@ class BootstrapFormHelper extends FormHelper {
 					foreach ($option as $_option) {
 						array_push($_option, array());
 						list($text, $addonOptions) = $_option;
-						$addonOptions += $default;
-
-						if (strpos($addon, 'Button')) {
-							$addonOptions['class'] = 'input-group-btn';
+						$class = !empty($addonOptions['class']) ? $addonOptions['class'] : false;
+						unset($addonOptions['class']);
+						$addonOptions = strpos($addon, 'Button') ? $defaultButton : $default;
+						if ($class) {
+							$addonOptions = $this->addClass($addonOptions, $class);
 						}
 
 						$wrap = $addonOptions['wrap'];
