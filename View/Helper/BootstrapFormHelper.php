@@ -10,7 +10,7 @@ class BootstrapFormHelper extends FormHelper {
 
 	const FORM_HORIZONTAL = 'form-horizontal';
 
-	const CLASS_GROUP = 'control-group';
+	const CLASS_GROUP = 'form-group';
 
 	const CLASS_INPUTS = 'controls';
 
@@ -21,11 +21,75 @@ class BootstrapFormHelper extends FormHelper {
 	const CLASS_ERROR = 'error';
 
 	public $helpers = array('Html' => array('className' => 'TwitterBootstrap.BootstrapHtml'));
-
+	
 	protected $_isHorizontal = false;
-
 	protected $_Opts = array();
+	
+	protected $colWidth = false;
+	protected $colSize = 'sm';
 
+
+	#section Column Width Functions
+	
+	//Temporarily stops using column widths
+	public function pauseColWidth($start = true) {
+		if ($start) {
+			$this->pausedColWidth = $this->colWidth;
+			$this->colWidth = false;
+		} else {
+			$this->colWidth = $this->pausedColWidth;
+			$this->pausedColWidth = false;
+		}
+	}
+	
+	public function setColWidth($colWidth = null, $colSize = 'sm') {
+		if (($colWidth !== false && empty($colWidth)) || $colWidth === true) {
+			$colWidth = 8;
+		}
+		$this->colWidth = $colWidth;
+		$this->colSize = $colSize;
+	}
+	
+	public function addColWidthClass($options = array(), $reverse = false) {
+		if ($class = $this->colWidthClass($reverse)) {
+			$options = $this->addClass($options, $class);
+		}
+		return $options;
+	}
+	
+	public function addColOffsetClass($options = array(), &$offset = false) {
+		if ($class = $this->colOffsetClass($this->_extractOption('offset', $options, null), $offset)) {
+			$options = $this->addClass($options, $class);
+		}
+		unset($options['offset']);
+		return $options;
+	}
+	
+	public function colWidthClass($reverse = false) {
+		$class = null;
+		if ($w = $this->colWidth($reverse)) {
+			$class = sprintf('col-%s-%d', $this->colSize, $w);
+		}
+		return $class;	
+	}
+
+	public function colWidth($reverse = false) {
+		$w = 0;
+		if (!empty($this->colWidth)) {
+			$w = $reverse ? 12 - $this->colWidth : $this->colWidth;
+		}
+		return $w;
+	}
+
+	public function colOffsetClass($setOffset = null, &$offset = false) {
+		if (empty($setOffset) || $setOffset === true) {
+			$setOffset = $this->colWidth(true);
+		}
+		$offset = $setOffset;
+		return sprintf('col-%s-offset-%d', $this->colSize, $setOffset);	
+	}
+	#endsection
+	
 	public function uneditable($fieldName, $options = array(), $before = false) {
 		if ($before) {
 			$class = explode(' ', $this->_extractOption('class', $options));
@@ -40,20 +104,22 @@ class BootstrapFormHelper extends FormHelper {
 	}
 
 	public function addon($fieldName, $options = array(), $before = false) {
+		$addons = array('prepend', 'append', 'prependButton', 'appendButton');
 		if ($before) {
-			$prepend = $this->_extractOption('prepend', $options);
-			$append = $this->_extractOption('append', $options);
-			if ($prepend || $append) {
-				$this->_Opts[$fieldName] = $options;
-				$options['type'] = 'addon';
+			foreach ($addons as $addon) {
+				if ($this->_extractOption($addon, $options)) {
+					$this->_Opts[$fieldName] = $options;
+					$options['type'] = 'addon';
+					break;
+				}
 			}
 			return $options;
 		} else {
 			$type = $this->_extractOption('type', $this->_Opts[$fieldName]);
 
-			$default = array('wrap' => 'span', 'class' => 'add-on');
+			$default = array('wrap' => 'span', 'class' => 'input-group-addon');
 			$divOptions = array();
-			foreach (array('prepend', 'append') as $addon) {
+			foreach ($addons as $addon) {
 				$$addon = null;
 				$option = (array)$this->_extractOption($addon, $options);
 				if ($option) {
@@ -65,6 +131,10 @@ class BootstrapFormHelper extends FormHelper {
 						list($text, $addonOptions) = $_option;
 						$addonOptions += $default;
 
+						if (strpos($addon, 'Button')) {
+							$addonOptions['class'] = 'input-group-btn';
+						}
+
 						$wrap = $addonOptions['wrap'];
 						unset($addonOptions['wrap']);
 
@@ -72,10 +142,18 @@ class BootstrapFormHelper extends FormHelper {
 					}
 
 					unset($options[$addon]);
-					$divOptions = $this->addClass($divOptions, 'input-' . $addon);
+					$divOptions = $this->addClass($divOptions, 'input-group');
 				}
 			}
-			$out = $prepend . $this->{$type}($fieldName, $options) . $append;
+
+			if ($type == 'select') {
+				$selectOptions = $this->_extractOption('options', $options, array());
+				unset($options['options']);
+				$input = $this->{$type}($fieldName, $selectOptions, (array) $options);
+			} else {
+				$input = $this->{$type}($fieldName, $options);
+			}
+			$out = $prepend . $prependButton . $input . $appendButton . $append;
 			return $this->Html->tag('div', $out, $divOptions);
 		}
 	}
@@ -100,6 +178,9 @@ class BootstrapFormHelper extends FormHelper {
 	}
 
 	protected function _setOptions($fieldName, $options) {
+		if (!in_array($options['type'], array('checkbox', 'radio'))) {
+			$options = $this->addClass($options, 'form-control');
+		}
 		if ('textarea' === $options['type']) {
 			$options += array('cols' => false, 'rows' => '3');
 		}
@@ -149,7 +230,17 @@ class BootstrapFormHelper extends FormHelper {
 
 		if (in_array(self::FORM_HORIZONTAL, $class)) {
 			$this->_isHorizontal = true;
+		} else {
+			$this->_isHorizontal = false;
 		}
+
+		$colWidth = false;
+		if (!empty($options['col'])) {
+			$colWidth = $options['col'];
+		} else if ($this->_isHorizontal) {
+			$colWidth = true;
+		}
+		$this->setColWidth($colWidth);
 
 		if (in_array(self::FORM_SEARCH, $class) || in_array(self::FORM_INLINE, $class)) {
 			$options['inputDefaults'] = Set::merge($inputDefaults, array('div' => false, 'label' => false));
@@ -232,6 +323,7 @@ class BootstrapFormHelper extends FormHelper {
 			if (false !== $div) {
 				$class = $this->_extractOption('class', $label, 'control-label');
 				$label = $this->addClass($label, $class);
+				$label = $this->addColWidthClass($label, true);
 			}
 			$text = $label['text'];
 			unset($label['text']);
@@ -243,10 +335,27 @@ class BootstrapFormHelper extends FormHelper {
 		$options['between'] = null;
 
 		$input = parent::input($fieldName, $options);
-		$divControls = $this->_extractOption('divControls', $options, self::CLASS_INPUTS);
+		//$divControls = $this->_extractOption('divControls', $options, self::CLASS_INPUTS);
+		$divControls = $this->_extractOption('divControls', $options, '');
+
+		$offset = $this->_extractOption('offset', $options, false);
+		if ($offset) {
+			$divControls .= ' ' . $this->colOffsetClass($offset);
+			unset($options['offset']);
+		}
+		
+		if (($offset || $label) && ($colWidthClass = $this->colWidthClass())) {
+			$divControls .= ' ' . $colWidthClass;
+		}
+
 		$input = $hidden . ((false === $div) ? $input : $this->Html->div($divControls, $input));
 
 		$out = $before . $label . $between . $input;
+		/*
+		if (!empty($div)) {
+			$div .= ' form-group';
+		}
+		*/
 		return (false === $div) ? $out : $this->Html->tag('div', $out, array('class' => $div));
 	}
 
