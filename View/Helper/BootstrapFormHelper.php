@@ -160,6 +160,10 @@ class BootstrapFormHelper extends FormHelper {
 
 	public function checkbox($fieldName, $options = array()) {
 		$label = $this->_extractOption('label', $this->_Opts[$fieldName]);
+		if ($label === false) {
+			return parent::checkbox($fieldName, $options);
+		}
+		
 		if (!is_array($label)) {
 			$label = array('text' => $label);
 		}
