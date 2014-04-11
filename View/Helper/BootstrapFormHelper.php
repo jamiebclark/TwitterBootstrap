@@ -205,9 +205,7 @@ class BootstrapFormHelper extends FormHelper {
 		$options['legend'] = false;
 		$options['separator'] = "\n";
 		$out = parent::radio($fieldName, $radioOptions, $options);
-		if (!isset($options['label']) || $options['label'] !== false) {
-			$out = $this->_restructureLabel($out, array('class' => 'radio'));
-		}
+		$out = $this->_restructureLabel($out, array('class' => 'radio'));
 		return $out;
 	}
 
@@ -343,9 +341,11 @@ class BootstrapFormHelper extends FormHelper {
 		$between = $this->_extractOption('between', $options);
 		$options['between'] = null;
 
+		$divControls = $this->_extractOption('divControls', $options, '');
+		unset($options['divControls']);
+
 		$input = parent::input($fieldName, $options);
 		//$divControls = $this->_extractOption('divControls', $options, self::CLASS_INPUTS);
-		$divControls = $this->_extractOption('divControls', $options, '');
 
 		$offset = $this->_extractOption('offset', $options, false);
 		if ($offset) {
