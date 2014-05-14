@@ -18,7 +18,7 @@ class BootstrapFormHelper extends FormHelper {
 
 	const CLASS_BUTTON = 'btn';
 
-	const CLASS_ERROR = 'error';
+	const CLASS_ERROR = 'has-error';
 
 	public $helpers = array('Html' => array('className' => 'TwitterBootstrap.BootstrapHtml'));
 	
