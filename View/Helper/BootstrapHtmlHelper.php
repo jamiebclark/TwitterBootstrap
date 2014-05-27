@@ -77,6 +77,25 @@ class BootstrapHtmlHelper extends HtmlHelper {
 		return parent::script($url, $options);
 	}
 
+	public function getCrumbs($separator = '&raquo;', $startText = false) {
+		$crumbs = $this->_prepareCrumbs($startText);
+		$items = array();
+		$last = count($crumbs) - 1;
+		foreach ($crumbs as $k => $crumb) {
+			if ($k == $last) {
+				$crumb[2] = $this->addClass((array) $crumb[2], 'active');
+			}
+			if (!empty($crumb[1])) {
+				$items[] = $this->Html->link($crumb[0], $crumb[1], $crumb[2]);
+			} else if (!empty($crumb[1])) {
+				$items[] = $this->Html->tag('span', $crumb[0], $crumb[2]);
+			} else {
+				$items[] = $crumb[0];
+			}
+		}
+		return $this->breadcrumb($items);
+	}
+		
 	public function breadcrumb($items, $options = array()) {
 		$default = array(
 			'class' => 'breadcrumb',
@@ -87,7 +106,6 @@ class BootstrapHtmlHelper extends HtmlHelper {
 		$li = array();
 		for ($i = 0; $i < $count - 1; $i++) {
 			$text = $items[$i];
-			$text .= '&nbsp;<span class="divider">/</span>';
 			$li[] = parent::tag('li', $text);
 		}
 		$li[] = parent::tag('li', end($items), array('class' => 'active'));
