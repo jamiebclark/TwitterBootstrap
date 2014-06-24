@@ -286,10 +286,8 @@ class BootstrapFormHelper extends FormHelper {
 			$options
 		);
 		$this->_Opts[$fieldName] = $options;
-
 		$type = $this->_extractOption('type', $options);
 		$options = $this->_getType($fieldName, $options);
-
 		$hidden = null;
 		if ('hidden' === $options['type']) {
 			$options['div'] = false;
@@ -347,6 +345,10 @@ class BootstrapFormHelper extends FormHelper {
 		$input = parent::input($fieldName, $options);
 		//$divControls = $this->_extractOption('divControls', $options, self::CLASS_INPUTS);
 
+		if ($this->colWidth && in_array($type, ['checkbox', 'radio'])) {
+			$options['offset'] = 12 - $this->colWidth;
+		}
+
 		$offset = $this->_extractOption('offset', $options, false);
 		if ($offset) {
 			$divControls .= ' ' . $this->colOffsetClass($offset);
@@ -356,6 +358,7 @@ class BootstrapFormHelper extends FormHelper {
 		if (($offset || $label) && ($colWidthClass = $this->colWidthClass())) {
 			$divControls .= ' ' . $colWidthClass;
 		}
+		// debug(compact('options', 'offset', 'label', 'colWidthClass', 'type'));
 
 		$input = $hidden . ((false === $div) ? $input : $this->Html->div($divControls, $input));
 
