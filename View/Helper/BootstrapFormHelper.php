@@ -345,7 +345,7 @@ class BootstrapFormHelper extends FormHelper {
 		$input = parent::input($fieldName, $options);
 		//$divControls = $this->_extractOption('divControls', $options, self::CLASS_INPUTS);
 
-		if ($this->colWidth && in_array($type, ['checkbox', 'radio'])) {
+		if (empty($label) && $this->colWidth && in_array($type, ['checkbox', 'radio'])) {
 			$options['offset'] = 12 - $this->colWidth;
 		}
 
